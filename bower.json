@@ -1,0 +1,9 @@
+{
+  "name": "Gulping",
+  "dependencies": {
+    "jquery": "1.11",
+    "bootstrap": "3",
+    "requirejs": "~2.1.18",
+    "modernizr": "~2.8.3"
+  }
+}
