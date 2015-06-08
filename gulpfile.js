@@ -65,9 +65,9 @@ gulp.task('js', function () {
 });
 
 // Вотчер
-gulp.task('watch', ["lessCompile", "jsCompress"], function () {
+gulp.task('watch', ["lessCompile", "jsCompress", "rev"], function () {
   gulp.watch(['./app/*.html'], ['html']);
-  gulp.watch(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"], ["lessCompile"]);
+  gulp.watch(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"], ["lessCompile" , "rev"]);
   gulp.watch(['./app/assets/css/style.min.css'], ['css']);
   gulp.watch(['./app/assets/js/app.js'], ['js']);
 });
