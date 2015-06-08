@@ -1,9 +1,12 @@
+"use strict";
+
 var gulp = require("gulp"),
 	less = require("gulp-less"),
 	path = require("path"),
 	cssMinify = require("gulp-minify-css"),
 	jsUglify = require("gulp-uglify"),
 	concat = require("gulp-concat"),
+	rev = require("gulp-rev-append"),
 	connect = require("gulp-connect"),
 	opn = require("opn");
 
@@ -16,6 +19,13 @@ gulp.task("lessCompile", function () {
 				}))
 				.pipe(cssMinify())
 				.pipe(gulp.dest("./app/assets/css/"))
+});
+
+// Версионирование подключаемых фалов
+gulp.task('rev', function() {
+  gulp.src('./app/index.html')
+    .pipe(rev())
+    .pipe(gulp.dest('./app/'));
 });
 
 // Сжатие js
