@@ -1,19 +1,38 @@
 "use strict";
 
-var gulp = require("gulp"),
-	less = require("gulp-less"),
-	path = require("path"),
-	cssMinify = require("gulp-minify-css"),
-	jsUglify = require("gulp-uglify"),
-	concat = require("gulp-concat"),
-	rev = require("gulp-rev-append"),
-	connect = require("gulp-connect"),
-	opn = require("opn");
+var gulp 			= require("gulp"),
+	less 			= require("gulp-less"),
+	gutil           = require('gulp-util'),
+	cssMinify 		= require("gulp-minify-css"),
+	jsUglify 		= require("gulp-uglify"),
+	concat 			= require("gulp-concat"),
+	rev 			= require('gulp-rev'),
+	revCollector 	= require("gulp-rev-collector"),
+	revOutdated     = require('gulp-rev-outdated'),
+	connect 		= require("gulp-connect"),
+	path 			= require("path"),
+	opn 			= require("opn"),
+	rimraf          = require('rimraf'),
+	through         = require('through2');
+
+function cleaner() {
+    return through.obj(function(file, enc, cb){
+        rimraf( path.resolve( (file.cwd || process.cwd()), file.path), function (err) {
+            if (err) {
+                this.emit('error', new gutil.PluginError('Cleanup old files', err));
+            }
+            this.push(file);
+            cb();
+        }.bind(this));
+    });
+};
+
+
 
 // Компиляция LESS
 gulp.task("lessCompile", function () {
 	return gulp.src(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"])
-				.pipe(concat("style.min.less"))
+				.pipe(concat("style.less"))
 				.pipe(less({
 					paths: [ path.join(__dirname), "less", "includes" ]
 				}))
@@ -22,10 +41,33 @@ gulp.task("lessCompile", function () {
 });
 
 // Версионирование подключаемых фалов
-gulp.task('rev', function() {
-  gulp.src('./app/index.html')
-    .pipe(rev())
-    .pipe(gulp.dest('./app/'));
+gulp.task("revCss", function () {
+	return gulp.src(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"])
+				.pipe(concat("style.less"))
+				.pipe(less({
+					paths: [ path.join(__dirname), "less", "includes" ]
+				}))
+				.pipe(cssMinify())
+				.pipe(rev())
+				.pipe(gulp.dest("./app/assets/css/"))
+				.pipe(rev.manifest())
+				.pipe(gulp.dest("./src/manifest/"))
+});
+
+gulp.task('revCollector', ["revCss"], function () {
+    return gulp.src(['./src/manifest/*.json', './app/*.html'])
+		        .pipe( revCollector({
+		            replaceReved: true
+		        }))
+		        .pipe( gulp.dest('./app/') );
+});
+
+gulp.task('clean', function() {
+    gulp.src( ['./app/assets/css/*.css'], {read: false})
+        .pipe( revOutdated( ) ) // leave 1 latest asset file for every file name prefix.
+        .pipe( cleaner() );
+
+    return;
 });
 
 // Сжатие js
@@ -67,7 +109,7 @@ gulp.task('js', function () {
 // Вотчер
 gulp.task('watch', ["lessCompile", "jsCompress", "rev"], function () {
   gulp.watch(['./app/*.html'], ['html']);
-  gulp.watch(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"], ["lessCompile" , "rev"]);
+  gulp.watch(["./src/bower/bootstrap/less/bootstrap.less", "./src/less/*.less"], ["lessCompile"]);
   gulp.watch(['./app/assets/css/style.min.css'], ['css']);
   gulp.watch(['./app/assets/js/app.js'], ['js']);
 });
